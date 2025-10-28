@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Are Flight Routes Straight? — A JFK Story Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.16.1/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        :root {
+            --w: 960px
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+            background: #0b1220;
+            color: #111
+        }
+
+        .page {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            min-height: 100%
+        }
+
+        .hero {
+            position: relative;
+            height: 56vh;
+            background: #0b1220;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px
+        }
+
+        .hero h1 {
+            font-size: clamp(28px, 4vw, 44px);
+            margin: 0 0 10px
+        }
+
+        .hero p {
+            opacity: .9;
+            margin: 0
+        }
+
+        .story {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0
+        }
+
+        .map-wrap {
+            position: sticky;
+            top: 0;
+            height: 100vh
+        }
+
+        #map {
+            position: relative;
+            height: 100vh
+        }
+
+        .steps {
+            position: relative;
+            max-width: var(--w);
+            margin: 0 auto;
+            padding: 24px
+        }
+
+        .step {
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+            margin: 60vh 0;
+            opacity: .95
+        }
+
+        .step h2 {
+            margin: 0 0 6px
+        }
+
+        .step .sub {
+            margin: 6px 0 0;
+            color: #555
+        }
+
+        .pill {
+            display: inline-block;
+            background: #eef2ff;
+            color: #111;
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-right: 6px
+        }
+
+        .ref {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px
+        }
+
+        .legend {
+            position: fixed;
+            bottom: 14px;
+            left: 14px;
+            z-index: 5;
+            background: #ffffffea;
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            font-size: 13px
+        }
+
+        .k {
+            display: flex;
+            align-items: center;
+            margin: 4px 0
+        }
+
+        .k i {
+            width: 14px;
+            height: 3px;
+            display: inline-block;
+            margin-right: 8px;
+            border-radius: 2px
+        }
+
+        .k .wx {
+            background: #ef4444
+        }
+
+        .k .airspace {
+            background: #f59e0b
+        }
+
+        .k .polar {
+            background: #3b82f6
+        }
+
+        .k .great {
+            background: #10b981
+        }
+
+        @media (max-width:720px) {
+            .step {
+                margin: 70vh 0
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <header class="hero">
+            <div>
+                <h1>Are Flight Routes Straight?</h1>
+                <p>What happens at JFK — and why routes bend: weather, airspace, aircraft, and more.</p>
+                <p style="opacity:.7;margin-top:8px">By Yuanhao (Kharle) Wu</p>
+            </div>
+        </header>
+
+        <div class="story">
+            <div class="map-wrap">
+                <div id="map"></div>
+            </div>
+            <aside class="steps">
+
+                <!-- Intro / JFK context -->
+                <section class="step" data-step="intro">
+                    <span class="pill">JFK</span><span class="pill">Context</span>
+                    <h2>What’s happening at John F. Kennedy International Airport?</h2>
+                    <p class="sub">JFK is a major international gateway for New York City, with multiple active
+                        terminals and hub operations for major carriers.</p>
+                </section>
+
+                <!-- Busiest & Longest -->
+                <section class="step" data-step="busiest">
+                    <span class="pill">Busiest</span>
+                    <h2>The busiest routes & longest legs</h2>
+                    <p class="sub">Peak pairs change seasonally. Long-haul services stretch far into the Pacific — think
+                        NYC to Auckland (~14,215 km).</p>
+                </section>
+
+                <!-- Are routes straight? -->
+                <section class="step" data-step="straight">
+                    <span class="pill">Great-circle</span>
+                    <h2>Are flight routes “straight”?</h2>
+                    <p class="sub">On a globe, the <em>shortest</em> path is a great-circle. On flat maps it looks
+                        curved — and real flights bend further due to operational constraints.</p>
+                </section>
+
+                <!-- Weather detour: DL516 JFK→LAX -->
+                <section class="step" data-step="wx">
+                    <span class="pill">Case Study</span><span class="pill">Weather</span>
+                    <h2>Weather: DL516 — JFK to LAX</h2>
+                    <p class="sub">Storm systems and turbulence fields can force large deviations from the ideal path to
+                        maintain safety and comfort.</p>
+                </section>
+
+                <!-- Airspace restriction: MF887 Xiamen→Taipei -->
+                <section class="step" data-step="airspace">
+                    <span class="pill">Case Study</span><span class="pill">Airspace</span>
+                    <h2>Airspace restrictions: MF887 — Xiamen to Taipei</h2>
+                    <p class="sub">Airspace closures and political restrictions can block direct access, pushing traffic
+                        to route around sensitive corridors.</p>
+                </section>
+
+                <!-- Aircraft performance: AI174 SFO→DEL -->
+                <section class="step" data-step="polar">
+                    <span class="pill">Case Study</span><span class="pill">Aircraft</span>
+                    <h2>Aircraft performance: AI174 — San Francisco to New Delhi</h2>
+                    <p class="sub">Range, weight, winds and ETOPS drive polar/near-polar routing to balance payload and
+                        fuel margins.</p>
+                </section>
+
+                <!-- Closing / References -->
+                <section class="step" data-step="end">
+                    <span class="pill">Takeaways</span>
+                    <h2>Why routes bend</h2>
+                    <p class="sub">Great-circle geometry meets real-world constraints: weather, airspace, traffic flow,
+                        aircraft performance and fuel optimization — explaining why “straight lines” rarely stay
+                        straight in the sky.</p>
+                    <div class="ref">
+                        Sources: Airport terminal info and context; route illustrations for weather, restricted
+                        airspace, and polar paths. (Replace with your citations & links.)
+                    </div>
+                </section>
+
+            </aside>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="k"><i class="great"></i> Great-circle reference</div>
+        <div class="k"><i class="wx"></i> Weather detour (DL516)</div>
+        <div class="k"><i class="airspace"></i> Airspace reroute (MF887)</div>
+        <div class="k"><i class="polar"></i> Polar/near-polar path (AI174)</div>
+    </div>
+
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>  
+    <script src="https://unpkg.com/scrollama"></script>
+    <script src="https://unpkg.com/intersection-observer"></script>
+    <script>
+        /* ===== 1) Mapbox init ===== */
+        mapboxgl.accessToken = 'pk.eyJ1Ijoia2hhcmxld3UiLCJhIjoiY2x1dnBlM3dsMDYydzJtb3R3OTByamJhcSJ9.Plkn2zkTVwyjw721fbYqNQ'; // <-- replace with your token
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v11',
+            center: [-73.7781, 40.6413], // JFK
+            zoom: 3,
+            pitch: 45,
+            bearing: -20,
+            cooperativeGestures: true
+        });
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+        /* ===== 2) Simple demo geometries (replace with precise data) ===== */
+        // Great-circle reference (JFK–LAX approx)
+        const refGreatCircle = {
+            "type": "Feature", "properties": {},
+            "geometry": {
+                "type": "LineString", "coordinates": [
+                    [-73.7781, 40.6413], [-90, 43], [-110, 38], [-118.4085, 33.9416]
+                ]
+            }
+        };
+        // Weather detour example (DL516 style — more southerly)
+        const wxDetour = {
+            "type": "Feature", "properties": {},
+            "geometry": {
+                "type": "LineString", "coordinates": [
+                    [-73.7781, 40.6413], [-85, 36], [-100, 34], [-118.4085, 33.9416]
+                ]
+            }
+        };
+        // Airspace reroute (Xiamen→Taipei avoiding Strait; illustrative only)
+        const airspaceReroute = {
+            "type": "Feature", "properties": {},
+            "geometry": {
+                "type": "LineString", "coordinates": [
+                    [118.13, 24.54], [119.5, 24.8], [121.0, 25.6] // skirt around strait
+                ]
+            }
+        };
+        // Polar / near-polar (SFO→DEL; illustrative only)
+        const polarPath = {
+            "type": "Feature", "properties": {},
+            "geometry": {
+                "type": "LineString", "coordinates": [
+                    [-122.3790, 37.6213], [-140, 65], [-90, 75], [40, 70], [77.1025, 28.7041]
+                ]
+            }
+        };
+
+        /* ===== 3) Layers + styles ===== */
+        function addRoute(id, data, color, width) {
+            if (map.getSource(id)) return;
+            map.addSource(id, { type: 'geojson', data });
+            map.addLayer({
+                id: id, type: 'line', source: id, layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': color, 'line-width': width, 'line-opacity': 0.9 }
+            });
+        }
+
+        map.on('load', () => {
+            addRoute('great', refGreatCircle, '#10b981', 2.5);
+            addRoute('wx', wxDetour, '#ef4444', 3);
+            addRoute('airspace', airspaceReroute, '#f59e0b', 3);
+            addRoute('polar', polarPath, '#3b82f6', 3);
+
+            // default visibility
+            map.setLayoutProperty('great', 'visibility', 'none');
+            map.setLayoutProperty('wx', 'visibility', 'none');
+            map.setLayoutProperty('airspace', 'visibility', 'none');
+            map.setLayoutProperty('polar', 'visibility', 'none');
+        });
+
+        /* ===== 4) Scrollytelling with Scrollama ===== */
+        const scroller = scrollama();
+        function fly(center, zoom, pitch = 45, bearing = -20) {
+            map.flyTo({ center, zoom, pitch, bearing, speed: 0.8, curve: 1 });
+        }
+        function show(id, vis = 'visible') { map.setLayoutProperty(id, 'visibility', vis); }
+        function hide(id) { map.setLayoutProperty(id, 'visibility', 'none'); }
+
+        function onStepEnter({ element }) {
+            const step = element.getAttribute('data-step');
+            if (!map.isStyleLoaded()) return;
+
+            switch (step) {
+                case 'intro':
+                    hide('great'); hide('wx'); hide('airspace'); hide('polar');
+                    fly([-73.7781, 40.6413], 7, 50, -15); // JFK
+                    break;
+                case 'busiest':
+                    hide('great'); hide('wx'); hide('airspace'); hide('polar');
+                    fly([174.7645, -36.8509], 3.1, 0, 0); // Auckland (longest example)
+                    break;
+                case 'straight':
+                    hide('wx'); hide('airspace'); hide('polar'); show('great');
+                    fly([-98, 40], 3.2, 30, -10); // US overview
+                    break;
+                case 'wx':
+                    hide('airspace'); hide('polar'); show('great'); show('wx');
+                    fly([-102, 37], 3.6, 40, -5); // weather detour frame
+                    break;
+                case 'airspace':
+                    hide('great'); hide('wx'); hide('polar'); show('airspace');
+                    fly([120.6, 24.9], 6.2, 30, 0); // Taiwan Strait vicinity
+                    break;
+                case 'polar':
+                    hide('great'); hide('wx'); hide('airspace'); show('polar');
+                    fly([10, 68], 2.8, 0, 0); // polar view
+                    break;
+                case 'end':
+                    hide('wx'); hide('airspace'); hide('polar'); hide('great');
+                    fly([-40, 35], 2.2, 0, 0); // global context
+                    break;
+            }
+        }
+
+        function onStepExit() { /* no-op, but could fade content here */ }
+
+        scroller
+            .setup({
+                step: ".step",
+                debug: false,
+                offset: 0.6
+            })
+            .onStepEnter(onStepEnter)
+            .onStepExit(onStepExit);
+
+        window.addEventListener("resize", scroller.resize);
+    </script>
+</body>
+
+</html>

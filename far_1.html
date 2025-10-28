@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manhattan Unused FAR</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    :root { --bg:#0b1020; --panel:#0f1530f0; --text:#e8eefc; --muted:#a8b3cf; --accent:#6ea8fe; }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+
+    #map{position:fixed;inset:0}
+
+    /* Left-side story panel */
+    #story{position:fixed;left:1rem;top:1rem;bottom:1rem;width:min(44rem, 40vw);max-width:92vw;overflow:auto;background:var(--panel);border:1px solid #1a2145;border-radius:14px;padding:1rem 0;backdrop-filter: blur(6px);scroll-behavior:smooth}
+    @media (max-width:1024px){#story{width:min(40rem, 92vw)}}
+
+    /* Each chapter occupies ~80% of the story pane height and centers its content */
+    .chapter{min-height:80%;display:grid;place-content:center;padding:2.25rem 1.5rem;border-bottom:1px solid #1a2145;background:linear-gradient(180deg, rgba(110,168,254,0.06), rgba(0,0,0,0) 40%)}
+    .chapter > *{max-width:90%;margin-left:auto;margin-right:auto}
+    .chapter h1{font-size:clamp(1.4rem,3vw,2rem);margin:.25rem 0 1rem;color:#fff}
+    .chapter h2{font-size:clamp(1.25rem,2.2vw,1.75rem);margin:0 0 .35rem}
+    
+    .chapter p{color:var(--muted);margin:.25rem 0}
+    .chapter.active{outline:2px solid #2c3e8c;outline-offset:-2px;background:linear-gradient(180deg, rgba(110,168,254,0.12), rgba(0,0,0,0) 40%)}
+
+    header.app{position:fixed;right:1rem;top:1rem;z-index:11;background:var(--panel);border:1px solid #1a2145;border-radius:12px;padding:.5rem 1rem}
+    header.app small{color:var(--muted)}
+
+    /* Mobile drawer behavior */
+    #storyToggle{display:none}
+    @media (max-width:768px){
+      #story{width:min(92vw, 26rem);transform:translateX(calc(-100% + 2.75rem));transition:transform .25s ease}
+      #story.open{transform:translateX(0)}
+      #storyToggle{display:block;position:fixed;left:.5rem;top:50%;transform:translateY(-50%);z-index:12;background:var(--panel);color:var(--text);border:1px solid #1a2145;border-radius:999px;padding:.5rem .75rem}
+    }
+
+    #map:empty::after{content:"Loading map…";color:#cbd5e1;position:absolute;inset:0;display:grid;place-items:center}
+  </style>
+</head>
+<body>
+  <div id="map" aria-label="Map"></div>
+  <header class="app"><strong>Manhattan Unused FAR</strong></header>
+  <button id="storyToggle" aria-controls="story" aria-expanded="false">Story</button>
+
+  <section id="story" aria-label="Narrative">
+    <div class="chapter" id="ch-1"
+      data-title="Overview"
+      data-location='[-74.017, 40.738]'
+      data-zoom="13.05"
+      data-style="mapbox://styles/kharlewu/cm4g664o601o701qr5xxn3ooa"
+      data-layers-show="choropleth-fill"
+      data-layers-hide="data-driven-circles">
+      <h1>The Overview of Manhattan</h1>
+      <p>In total, there are</p>
+      <h2>42,127</h2>
+      <p>Zoning Lots in Manhattan.</p>
+      <p>Among them, there are</p>
+      <h2>23,894</h2>
+      <p>having underutilized Residential FAR.</p>
+    </div>
+
+    <div class="chapter" id="ch-2"
+      data-title="Distribution"
+      data-location='[-74.067, 40.791]'
+      data-zoom="11.05"
+      data-style="mapbox://styles/kharlewu/cm4g664o601o701qr5xxn3ooa"
+      data-layers-show="data-driven-circles"
+      data-layers-hide="choropleth-fill">
+      <h1>Distribution of Unused Area</h1>
+      <p>I am using</p>
+      <h2>Unused FAR × Lot Area</h2>
+      <p>representing the <strong>unused area</strong>.</p>
+      <p>The darker <span style="color:#c31f13;font-weight:bold">Red</span> → greater concentration of lots with significant unused FAR.</p>
+      <p>The darker <span style="color:#2670c5;font-weight:bold">Blue</span> → greater concentration of lots with few unused FAR.</p>
+    </div>
+
+    <div class="chapter" id="ch-3"
+      data-title="Lower Manhattan"
+      data-location='[-74.006, 40.716]'
+      data-zoom="12.5"
+      data-style="mapbox://styles/kharlewu/cm4g664o601o701qr5xxn3ooa"
+      data-layers-show="data-driven-circles,choropleth-fill"
+      data-layers-hide="none">
+      <h1>Where are they?</h1>
+      <p>The unused FAR are mainly located in</p>
+      <h1>Lower Manhattan</h1>
+    </div>
+
+    <div class="chapter" id="ch-4"
+      data-title="Midtown West"
+      data-location='[-73.995, 40.774]'
+      data-zoom="12.83"
+      data-style="mapbox://styles/kharlewu/cm4g664o601o701qr5xxn3ooa"
+      data-layers-show="data-driven-circles,choropleth-fill"
+      data-layers-hide="none">
+      <p>And</p>
+      <h1>Hell's Kitchen – Columbus Circle</h1>
+    </div>
+  </section>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script>
+  (function(){
+    mapboxgl.accessToken = 'pk.eyJ1Ijoia2hhcmxld3UiLCJhIjoiY2x1dnBlM3dsMDYydzJtb3R3OTByamJhcSJ9.Plkn2zkTVwyjw721fbYqNQ';
+    const appMap = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/kharlewu/cm4g664o601o701qr5xxn3ooa',
+      center: [-74.218, 40.757],
+      zoom: 9.5,
+      projection: 'mercator'
+    });
+    appMap.addControl(new mapboxgl.NavigationControl({showCompass:false}));
+
+    const chapters = Array.from(document.querySelectorAll('.chapter'));
+    const storyEl = document.getElementById('story');
+    const toggleBtn = document.getElementById('storyToggle');
+    let activeStyleURL = 'mapbox://styles/kharlewu/cm4g664o601o701qr5xxn3ooa';
+
+    function ensureLayerVisibility(layersToShow = [], layersToHide = []){
+      const norm = (arr) => (arr || []).map(s => (s||'').trim()).filter(s => s && s.toLowerCase() !== 'none');
+      const show = norm(layersToShow);
+      const hide = norm(layersToHide);
+      hide.forEach(layer => { if(appMap.getLayer(layer)) appMap.setLayoutProperty(layer, 'visibility', 'none'); });
+      show.forEach(layer => { if(appMap.getLayer(layer)) appMap.setLayoutProperty(layer, 'visibility', 'visible'); });
+    }
+
+    function activateChapter(el){
+      if (!el) return;
+      chapters.forEach(c => c.classList.toggle('active', c === el));
+      const location = JSON.parse(el.dataset.location);
+      const zoom = parseFloat(el.dataset.zoom || appMap.getZoom());
+      const newStyle = (el.dataset.style || '').trim();
+      const layersToShow = (el.dataset.layersShow || '').split(',');
+      const layersToHide = (el.dataset.layersHide || '').split(',');
+
+      const applyViewAndLayers = () => {
+        appMap.flyTo({ center: location, zoom: zoom, essential: true });
+        appMap.once('idle', () => {
+          ensureLayerVisibility(layersToShow, layersToHide);
+        });
+      };
+
+      if (newStyle && newStyle !== activeStyleURL){
+        appMap.once('styledata', () => appMap.once('idle', applyViewAndLayers));
+        activeStyleURL = newStyle;
+        appMap.setStyle(newStyle);
+      } else {
+        applyViewAndLayers();
+      }
+    }
+
+    appMap.on('load', () => {
+      const allLayerNames = new Set();
+      chapters.forEach(ch => {
+        const show = (ch.dataset.layersShow || '').split(',').map(s=>s.trim()).filter(Boolean);
+        const hide = (ch.dataset.layersHide || '').split(',').map(s=>s.trim()).filter(Boolean);
+        [...show, ...hide].forEach(l => { if(l && l.toLowerCase()!== 'none') allLayerNames.add(l); });
+      });
+      allLayerNames.forEach(l => { if(appMap.getLayer(l)) appMap.setLayoutProperty(l, 'visibility', 'none'); });
+      activateChapter(chapters[0]);
+      // Mobile: default collapsed
+      handleResponsiveDrawer();
+    });
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) activateChapter(entry.target); });
+    }, {root: storyEl, threshold: 0.55});
+
+    chapters.forEach(ch => {
+      io.observe(ch);
+      ch.addEventListener('mouseenter', () => activateChapter(ch));
+      ch.addEventListener('click', () => activateChapter(ch));
+    });
+
+    storyEl.addEventListener('scroll', () => appMap.resize());
+
+    // --- Mobile drawer logic ---
+    const mq = window.matchMedia('(max-width: 768px)');
+    function handleResponsiveDrawer(){
+      if (mq.matches){ // mobile: collapse by default
+        storyEl.classList.remove('open');
+        toggleBtn.setAttribute('aria-expanded','false');
+      } else { // desktop: always open
+        storyEl.classList.add('open');
+        toggleBtn.setAttribute('aria-expanded','true');
+      }
+    }
+    mq.addEventListener('change', handleResponsiveDrawer);
+
+    toggleBtn.addEventListener('click', () => {
+      const isOpen = storyEl.classList.toggle('open');
+      toggleBtn.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    window.__appMap = appMap;
+  })();
+  </script>
+</body>
+</html>

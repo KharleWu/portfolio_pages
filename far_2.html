@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NYC Residential Development – Fullscreen Scrollytelling</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        :root {
+          --bg: #f3f0f0;
+          --panel: rgba(255, 255, 255, 0.88);
+          --text: #1b1b1b;
+          --muted: #4f4f4f;
+          --accent: #b64b00;
+          --border: #d9d7d7;
+          --panel-tint: rgba(0, 0, 0, 0.04);
+          --active-outline: rgba(182, 75, 0, 0.35);
+        }
+      
+        * { box-sizing: border-box }
+      
+        html, body {
+          height: 100%;
+          margin: 0;
+          background: var(--bg);
+          color: var(--text);
+          font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        }
+      
+        #map_1 {
+          position: fixed;
+          inset: 0;
+        }
+      
+        #story_1 {
+          position: fixed;
+          left: 1rem;
+          top: 1rem;
+          bottom: 1rem;
+          width: min(44rem, 35vw);
+          max-width: 92vw;
+          overflow: auto;
+          background: var(--panel);
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          padding: 1rem 0;
+          backdrop-filter: blur(6px);
+          scroll-behavior: smooth;
+        }
+      
+        @media (max-width:1024px) {
+          #story_1 { width: min(40rem, 35vw) }
+        }
+      
+        #story_1 .chapter {
+          min-height: 80%;
+          display: grid;
+          place-content: center;
+          padding: 2.25rem 1.5rem;
+          border-bottom: 1px solid var(--border);
+          background: linear-gradient(180deg, var(--panel-tint), rgba(0, 0, 0, 0) 45%);
+        }
+      
+        #story_1 .chapter > * {
+          max-width: 95%;
+          margin-left: auto;
+          margin-right: auto;
+        }
+      
+        #story_1 .chapter h1 {
+          font-size: clamp(1.4rem, 3vw, 2rem);
+          margin: .25rem 0 1rem;
+          color: var(--accent);
+        }
+
+        #story_1 .chapter h2 {
+          font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+          margin: 0 0 .35rem;
+          color: var(--text);
+        }
+      
+        #story_1 .chapter p {
+          color: var(--muted);
+          margin: .25rem 0;
+        }
+      
+        #story_1 .chapter.active {
+          outline: 2px solid var(--active-outline);
+          outline-offset: -2px;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0) 45%);
+        }
+      
+        header.app {
+          position: fixed;
+          right: 1rem;
+          top: 1rem;
+          z-index: 11;
+          background: var(--panel);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: .5rem 1rem;
+        }
+      
+        header.app small { color: var(--muted) }
+      
+        #storyToggle_1 { display: none }
+      
+        @media (max-width:768px) {
+          #story_1 {
+            width: min(92vw, 26rem);
+            transform: translateX(calc(-100% + 2.75rem));
+            transition: transform .25s ease;
+          }
+          #story_1.open { transform: translateX(0) }
+      
+          #storyToggle_1 {
+            display: block;
+            position: fixed;
+            left: .5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 12;
+            background: var(--panel);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: .5rem .75rem;
+          }
+        }
+      
+        #map_1:empty::after {
+          content: "Loading map…";
+          color: var(--muted);
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-items: center;
+        }
+      </style>
+</head>
+
+<body>
+    <div id="map_1" aria-label="Map"></div>
+    <header class="app"><strong>NYC Residential – since 2015</strong> <small>· Fullscreen · Scroll chapters</small>
+    </header>
+    <button id="storyToggle_1" aria-controls="story_1" aria-expanded="false">Story</button>
+
+    <section id="story_1" aria-label="Narrative">
+        <div class="chapter" id="bldg-overview" data-location='[-74.005, 40.760]' data-zoom="12.70"
+            data-style="mapbox://styles/kharlewu/cm4kebvwa00nr01qw3kv78cb0"
+            data-layers-show="choropleth-fill,choropleth-stroke" data-layers-hide="data-driven-circles,heatmap">
+            <h1>New Residential Building</h1>
+            <p>There are</p>
+            <h2>1,029</h2>
+            <p>residential buildings built or renovated after 2015.</p>
+            <p>Among them,</p>
+            <h2>211</h2>
+            <p>were built or renovated after 2020.</p>
+            <p style="margin-top:.75rem">
+                <span style="display:inline-block;width:2.5vw;max-width:28px;height:12px;background:#ffba7a"></span>
+                Renovated after 2015<br>
+                <span style="display:inline-block;width:2.5vw;max-width:28px;height:12px;background:#ef350b"></span>
+                Built between 2015–2020<br>
+                <span style="display:inline-block;width:2.5vw;max-width:28px;height:12px;background:#7a0000"></span>
+                Built after 2020
+            </p>
+        </div>
+
+        <div class="chapter" id="skyscrapers-heat" data-location='[-74.025, 40.741]' data-zoom="11.5"
+            data-style="mapbox://styles/kharlewu/cm4kebvwa00nr01qw3kv78cb0" data-layers-show="heatmap"
+            data-layers-hide="choropleth-fill,data-driven-circles,choropleth-stroke">
+            <h1>New Skyscrapers</h1>
+            <p>Skyscrapers are defined as buildings with more than</p>
+            <h2>40 floors</h2>
+            <p>Among the residential buildings built after 2015,</p>
+            <h2>45</h2>
+            <p>of them are skyscrapers.</p>
+            <p>The heatmap shows where they are mainly located.</p>
+        </div>
+
+        <div class="chapter" id="skyscrapers-vs-far" data-location='[-74.002, 40.759]' data-zoom="11.73"
+            data-style="mapbox://styles/kharlewu/cm4kebvwa00nr01qw3kv78cb0"
+            data-layers-show="data-driven-circles,heatmap" data-layers-hide="choropleth-fill,choropleth-stroke">
+            <h1>Skyscrapers &amp; Unused Residential FAR</h1>
+            <p>By adding the distribution of the zoning lots with significant unused FAR to the analysis, we find that
+                new skyscrapers</p>
+            <h2>are more likely</h2>
+            <p>to be developed in areas where these lots are concentrated.</p>
+        </div>
+    </section>
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script>
+        (function () {
+            mapboxgl.accessToken = 'pk.eyJ1Ijoia2hhcmxld3UiLCJhIjoiY2x1dnBlM3dsMDYydzJtb3R3OTByamJhcSJ9.Plkn2zkTVwyjw721fbYqNQ';
+
+            const appMap1 = new mapboxgl.Map({
+                container: 'map_1',
+                style: 'mapbox://styles/kharlewu/cm4kebvwa00nr01qw3kv78cb0',
+                center: [-74.218, 40.757],
+                zoom: 9.5,
+                projection: 'mercator'
+            });
+            appMap1.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
+
+            const chapters = Array.from(document.querySelectorAll('#story_1 .chapter'));
+            const storyEl = document.getElementById('story_1');
+            const toggleBtn = document.getElementById('storyToggle_1');
+
+            // Track active style URL for safe switching
+            let activeStyleURL = 'mapbox://styles/kharlewu/cm4kebvwa00nr01qw3kv78cb0';
+
+            function ensureLayerVisibility(layersToShow = [], layersToHide = []) {
+                const norm = (arr) => (arr || []).map(s => (s || '').trim()).filter(s => s && s.toLowerCase() !== 'none');
+                const show = norm(layersToShow);
+                const hide = norm(layersToHide);
+                hide.forEach(layer => { if (appMap1.getLayer(layer)) appMap1.setLayoutProperty(layer, 'visibility', 'none'); });
+                show.forEach(layer => { if (appMap1.getLayer(layer)) appMap1.setLayoutProperty(layer, 'visibility', 'visible'); });
+            }
+
+            function activateChapter(el) {
+                if (!el) return;
+                chapters.forEach(c => c.classList.toggle('active', c === el));
+                const location = JSON.parse(el.dataset.location);
+                const zoom = parseFloat(el.dataset.zoom || appMap1.getZoom());
+                const newStyle = (el.dataset.style || '').trim();
+                const layersToShow = (el.dataset.layersShow || '').split(',');
+                const layersToHide = (el.dataset.layersHide || '').split(',');
+
+                const applyViewAndLayers = () => {
+                    appMap1.flyTo({ center: location, zoom: zoom, essential: true });
+                    appMap1.once('idle', () => {
+                        ensureLayerVisibility(layersToShow, layersToHide);
+                    });
+                };
+
+                if (newStyle && newStyle !== activeStyleURL) {
+                    appMap1.once('styledata', () => appMap1.once('idle', applyViewAndLayers));
+                    activeStyleURL = newStyle;
+                    appMap1.setStyle(newStyle);
+                } else {
+                    applyViewAndLayers();
+                }
+            }
+
+            appMap1.on('load', () => {
+                const allLayerNames = new Set();
+                chapters.forEach(ch => {
+                    const show = (ch.dataset.layersShow || '').split(',').map(s => s.trim()).filter(Boolean);
+                    const hide = (ch.dataset.layersHide || '').split(',').map(s => s.trim()).filter(Boolean);
+                    [...show, ...hide].forEach(l => { if (l && l.toLowerCase() !== 'none') allLayerNames.add(l); });
+                });
+                allLayerNames.forEach(l => { if (appMap1.getLayer(l)) appMap1.setLayoutProperty(l, 'visibility', 'none'); });
+                activateChapter(chapters[0]);
+                handleResponsiveDrawer();
+            });
+
+            // Intersection observer for scroll-driven activation
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => { if (entry.isIntersecting) activateChapter(entry.target); });
+            }, { root: storyEl, threshold: 0.55 });
+
+            chapters.forEach(ch => {
+                io.observe(ch);
+                ch.addEventListener('mouseenter', () => activateChapter(ch));
+                ch.addEventListener('click', () => activateChapter(ch));
+            });
+
+            // Keep map crisp while scrolling the story panel
+            storyEl.addEventListener('scroll', () => appMap1.resize());
+
+            // --- Mobile drawer logic ---
+            const mq = window.matchMedia('(max-width: 768px)');
+            function handleResponsiveDrawer() {
+                if (mq.matches) { // mobile: collapse by default
+                    storyEl.classList.remove('open');
+                    toggleBtn && toggleBtn.setAttribute('aria-expanded', 'false');
+                } else { // desktop: always open
+                    storyEl.classList.add('open');
+                    toggleBtn && toggleBtn.setAttribute('aria-expanded', 'true');
+                }
+            }
+            mq.addEventListener('change', handleResponsiveDrawer);
+
+            toggleBtn && toggleBtn.addEventListener('click', () => {
+                const isOpen = storyEl.classList.toggle('open');
+                toggleBtn.setAttribute('aria-expanded', String(isOpen));
+            });
+
+            // Expose for debugging (optional)
+            window.__appMap1 = appMap1;
+        })();
+    </script>
+</body>
+
+</html>
